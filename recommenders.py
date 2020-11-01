@@ -11,7 +11,7 @@ from tqdm.notebook import tqdm
 from lightgbm import LGBMClassifier
 from sklearn.model_selection import train_test_split
 
-from config import *
+import config as cfg
 from metrics import average_precision_at_k
 
 
@@ -23,7 +23,7 @@ class BaseRecommender:
     def __init__(self):
         pass
 
-    def fit(self, train_df, col_user=USER_COL, col_item=ITEM_COL, col_rating=DEFAULT_RATING_COL) -> None:
+    def fit(self, train_df, col_user=cfg.USER_COL, col_item=cfg.ITEM_COL, col_rating=cfg.DEFAULT_RATING_COL) -> None:
         """
         perform train procedure for the recommendation algorithm
         :param col_item: name for items column
@@ -37,7 +37,7 @@ class BaseRecommender:
         self.col_item = col_item
         self.col_rating = col_rating
 
-    def predict(self, test_df, k=DEFAULT_K):
+    def predict(self, test_df, k=cfg.DEFAULT_K):
         """
         predicts recommendations for test users
         :param test_df: pandas data frame with users, items and ratings columns
@@ -64,7 +64,7 @@ class MostPopularRecommender(BaseRecommender):
     Performs most popular recommendations for the given dataset
     """
 
-    def fit(self, train_df, col_user=USER_COL, col_item=ITEM_COL, col_rating=DEFAULT_RATING_COL):
+    def fit(self, train_df, col_user=cfg.USER_COL, col_item=cfg.ITEM_COL, col_rating=cfg.DEFAULT_RATING_COL):
         """
         Train the most popular items over the data set
         :param train_df: pandas data frame with users, items and ratings columns
@@ -78,7 +78,7 @@ class MostPopularRecommender(BaseRecommender):
                                                                                                 ascending=False)
 
     # change sum to count cause we use non-binary rating
-    def predict(self, test_df, k=DEFAULT_K):
+    def predict(self, test_df, k=cfg.DEFAULT_K):
         """
         Recommend k items for each user in test df
         :param test_df: pandas DataFrame with test users and truth values
@@ -112,8 +112,8 @@ class TruncatedSVDRecommender(BaseRecommender):
 
         return sparse.csr_matrix((ratings, (rows, cols)), shape=(len(users), len(items))), users, items
 
-    def fit(self, train_df, col_user=USER_COL, col_item=ITEM_COL,
-            col_rating=DEFAULT_RATING_COL, n_components=800):
+    def fit(self, train_df, col_user=cfg.USER_COL, col_item=cfg.ITEM_COL,
+            col_rating=cfg.DEFAULT_RATING_COL, n_components=800):
         """
         performs training of collaborative filtering recommender
         :param train_df:  pandas DataFrame with train data
@@ -128,7 +128,7 @@ class TruncatedSVDRecommender(BaseRecommender):
         self.trunc_svd = TruncatedSVD(n_components=n_components)
         self.user_matrix = self.trunc_svd.fit_transform(self.uii_matrix)
 
-    def predict(self, test_df, k=DEFAULT_K, batch_size=100):
+    def predict(self, test_df, k=cfg.DEFAULT_K, batch_size=100):
         """
         performs recommendations for test users in test set
         recommends
@@ -167,9 +167,9 @@ class ALSRecommender(BaseRecommender):
     """
 
     def fit(self, train_df,
-            col_user=USER_COL,
-            col_item=ITEM_COL,
-            col_rating=DEFAULT_RATING_COL,
+            col_user=cfg.USER_COL,
+            col_item=cfg.ITEM_COL,
+            col_rating=cfg.DEFAULT_RATING_COL,
             factors=100,
             confidence=5,
             regularization=0.1):
@@ -190,7 +190,7 @@ class ALSRecommender(BaseRecommender):
         self.als = AlternatingLeastSquares(factors=factors, use_gpu=False, regularization=regularization)
         self.als.fit(self.uii_matrix.T)
 
-    def predict(self, test_df, k=DEFAULT_K):
+    def predict(self, test_df, k=cfg.DEFAULT_K):
         """
         recommend k items for each user in test_df
         :param test_df: pandas DataFrame with test_users and truth recommendations
@@ -238,7 +238,7 @@ class StratifyMostPopularRecommender(BaseRecommender):
             subprocess.call(['make', '-C', '/content/Starspace'])
             print('StarSpace installed')
 
-    def fit(self, train_df, col_user=USER_COL, col_item=ITEM_COL, col_rating=DEFAULT_RATING_COL, clusters=500,
+    def fit(self, train_df, col_user=cfg.USER_COL, col_item=cfg.ITEM_COL, col_rating=cfg.DEFAULT_RATING_COL, clusters=500,
             starspace_df=None):
         """
         performs training of starspace user's representation
@@ -308,7 +308,7 @@ class StratifyMostPopularRecommender(BaseRecommender):
             mpr.fit(train_users, self.col_user, self.col_item, self.col_rating)
             self.recommenders.append(mpr)
 
-    def predict(self, test_df, k=DEFAULT_K):
+    def predict(self, test_df, k=cfg.DEFAULT_K):
         """
         performs recommendations for test users in test set
         :param test_df: pandas DataFrame with users and truth values
@@ -341,7 +341,7 @@ class KingOfTheHillRecommender:
     over the results on the validation set
     """
 
-    def __init__(self, col_user=USER_COL, col_item=ITEM_COL):
+    def __init__(self, col_user=cfg.USER_COL, col_item=cfg.ITEM_COL):
         """
         reads the needed datasets from the drive
         :param col_user: str name for user column
@@ -349,10 +349,10 @@ class KingOfTheHillRecommender:
         """
         self.col_user = col_user
         self.col_item = col_item
-        self.als_results = pd.read_csv(ALS_RESULTS, index_col=0)
-        self.mpr_results = pd.read_csv(MPR_RESULTS, index_col=0)
-        self.stratify_mpr_results = pd.read_csv(STRATIFY_MPR_RESULTS, index_col=0)
-        self.svd_results = pd.read_csv(SVD_RESULTS, index_col=0)
+        self.als_results = pd.read_csv(cfg.ALS_RESULTS, index_col=0)
+        self.mpr_results = pd.read_csv(cfg.MPR_RESULTS, index_col=0)
+        self.stratify_mpr_results = pd.read_csv(cfg.STRATIFY_MPR_RESULTS, index_col=0)
+        self.svd_results = pd.read_csv(cfg.SVD_RESULTS, index_col=0)
         self.als_results[self.col_item] = self.als_results[self.col_item].apply(_change_frames)
         self.mpr_results[self.col_item] = self.mpr_results[self.col_item].apply(_change_frames)
         self.stratify_mpr_results[self.col_item] = self.stratify_mpr_results[self.col_item].apply(_change_frames)
@@ -362,10 +362,10 @@ class KingOfTheHillRecommender:
         self.stratify_mpr_results.sort_values(by=self.col_user, inplace=True)
         self.svd_results.sort_values(by=self.col_user, inplace=True)
 
-        self.mpr_train = pd.read_csv(MPR_TRAIN, index_col=0)
-        self.stratify_mpr_train = pd.read_csv(STRATIFY_MPR_TRAIN, index_col=0)
-        self.als_train = pd.read_csv(ALS_TRAIN, index_col=0)
-        self.svd_train = pd.read_csv(SVD_TRAIN, index_col=0)
+        self.mpr_train = pd.read_csv(cfg.MPR_TRAIN, index_col=0)
+        self.stratify_mpr_train = pd.read_csv(cfg.STRATIFY_MPR_TRAIN, index_col=0)
+        self.als_train = pd.read_csv(cfg.ALS_TRAIN, index_col=0)
+        self.svd_train = pd.read_csv(cfg.SVD_TRAIN, index_col=0)
         self.mpr_train.sort_values(by=self.col_user, inplace=True)
         self.stratify_mpr_train.sort_values(by=self.col_user, inplace=True)
         self.als_train.sort_values(by=self.col_user, inplace=True)
@@ -376,7 +376,7 @@ class KingOfTheHillRecommender:
         self.svd_train[self.col_item] = self.svd_train[self.col_item].apply(_change_frames)
         self.train_results_list = [self.mpr_train, self.svd_train, self.als_train, self.stratify_mpr_train]
 
-        self.vectors = pd.read_csv(PATH_VECS, sep='\t', header=None)
+        self.vectors = pd.read_csv(cfg.PATH_VECS, sep='\t', header=None)
         self.vectors.rename(columns={0: "id"}, inplace=True)
         list_ind = []
         for qr in self.vectors.id.values:
