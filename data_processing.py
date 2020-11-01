@@ -3,7 +3,7 @@ import requests
 from zipfile import ZipFile
 import io
 
-from config import *
+from config import DATA_PATH, ORDERS, TRAIN_PRODUCTS_ORDERS, TEST_PRODUCTS_ORDERS, DEFAULT_RATING_COL
 
 
 FILE_NAMES = [ORDERS, TRAIN_PRODUCTS_ORDERS, TEST_PRODUCTS_ORDERS]

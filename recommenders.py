@@ -143,14 +143,14 @@ class TruncatedSVDRecommender(BaseRecommender):
         final = pd.DataFrame(columns=[self.col_user, self.col_item])
         intervals = [i * batch_size for i in range(len(test_users_indices) // batch_size + 1)] + [
             len(test_users_indices) + 1]
-        for i in range(len(intervals) - 1):
+        for i in tqdm(range(len(intervals) - 1)):
             dense_matrix = self.user_matrix[test_users_indices[intervals[i]: intervals[i + 1]]].dot(
                 np.diag(self.trunc_svd.singular_values_)).dot(
                 self.trunc_svd.components_)
 
             user_list = []
             for ind, row in enumerate(dense_matrix):
-                rec_items = [self.items[j] for j in row.argsort()[::-1] if row[j] > 0][:10]
+                rec_items = [self.items[j] for j in row.argsort()[::-1] if row[j] > 0][:k]
                 user_dict = {self.col_user: self.users[test_users_indices[ind + intervals[i]]],
                              self.col_item: rec_items}
                 user_list.append(user_dict)
@@ -416,7 +416,7 @@ class KingOfTheHillRecommender:
     def predict(self, test_df):
         test_vecs = self.user_vecs.merge(test_df, right_on=self.col_user, left_on='id').sort_values(by='id')
         test_vectors = test_vecs.drop(columns=['id', self.col_user, self.col_item]).values
-        test_users = test_vecs.id.values
+        test_users = test_vecs.reset_index()['id'].values
         prediction = self.classifier.predict(test_vectors)
         results = []
         for i, pred in enumerate(prediction):
