@@ -88,7 +88,7 @@ def mean_metrics(true_df: pd.DataFrame,
                  rating_func: Callable,
                  col_user: str = USER_COL,
                  col_rating: str = ITEM_COL,
-                 k: int = DEFAULT_K) -> float:
+                 k: int = DEFAULT_K) -> np.ndarray:
     """
     calculate chosen mean metric from the metric list over the dataframe
     :param true_df: dataframe with ground truth values
